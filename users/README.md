@@ -32,6 +32,53 @@ Custom manager for the CustomUser model that handles email-based user creation.
 - `create_superuser(email, password, **extra_fields)`: Creates a superuser
 - `_create_user(email, password, **extra_fields)`: Internal method for user creation
 
+## Serializers
+
+### UserRegistrationSerializer
+
+Handles user registration with comprehensive validation.
+
+**Fields:**
+- `email`: EmailField (required, unique validation)
+- `password`: CharField (write-only, min 8 chars, strength validation)
+- `password_confirm`: CharField (write-only, must match password)
+- `first_name`: CharField (optional)
+- `last_name`: CharField (optional)
+
+**Validation:**
+- Email format and uniqueness validation
+- Password strength requirements (8+ chars, uppercase, lowercase, number)
+- Password confirmation matching
+- Uses Django's built-in password validation
+
+### UserLoginSerializer
+
+Handles user authentication/login validation.
+
+**Fields:**
+- `email`: EmailField (required)
+- `password`: CharField (required)
+
+**Validation:**
+- Authenticates user credentials
+- Checks if user account is active
+- Returns authenticated user in validated data
+
+### UserProfileSerializer
+
+Handles user profile data serialization and updates.
+
+**Fields:**
+- `email`: EmailField (uniqueness validation on update)
+- `first_name`: CharField (optional)
+- `last_name`: CharField (optional)
+- `created_at`: DateTimeField (read-only)
+- `updated_at`: DateTimeField (read-only)
+
+**Validation:**
+- Email uniqueness validation (excluding current user)
+- Profile update validation
+
 ## Authentication
 
 This app configures Django to use email-based authentication:
@@ -64,6 +111,47 @@ admin = User.objects.create_superuser(
 )
 ```
 
+### Using Serializers
+
+```python
+from users.serializers import (
+    UserRegistrationSerializer,
+    UserLoginSerializer,
+    UserProfileSerializer
+)
+
+# User registration
+registration_data = {
+    'email': 'newuser@example.com',
+    'password': 'SecurePass123!',
+    'password_confirm': 'SecurePass123!',
+    'first_name': 'Jane',
+    'last_name': 'Doe'
+}
+serializer = UserRegistrationSerializer(data=registration_data)
+if serializer.is_valid():
+    user = serializer.save()
+
+# User login validation
+login_data = {
+    'email': 'user@example.com',
+    'password': 'SecurePass123!'
+}
+serializer = UserLoginSerializer(data=login_data)
+if serializer.is_valid():
+    user = serializer.validated_data['user']
+
+# Profile management
+serializer = UserProfileSerializer(user)
+profile_data = serializer.data
+
+# Profile update
+update_data = {'first_name': 'Updated Name'}
+serializer = UserProfileSerializer(user, data=update_data, partial=True)
+if serializer.is_valid():
+    updated_user = serializer.save()
+```
+
 ### Authentication
 
 ```python
@@ -84,7 +172,9 @@ if user is not None:
 - Email uniqueness enforced at database level
 - Password hashing using Django's built-in system
 - Input validation for email format
+- Password strength requirements (8+ chars, mixed case, numbers)
 - Automatic timestamp tracking for audit purposes
+- Comprehensive validation in serializers
 
 ## Testing
 
@@ -92,6 +182,7 @@ The app includes comprehensive tests:
 
 - **Model Tests** (`test_models.py`): Basic user creation and validation
 - **Edge Case Tests** (`test_edge_cases.py`): Unicode handling, validation, error cases
+- **Serializer Tests** (`test_serializers.py`): Registration, login, and profile serializer validation
 
 Run tests with:
 ```bash
@@ -118,3 +209,4 @@ This user model integrates with Django REST Framework and JWT authentication:
 - JWT tokens use email as the user identifier
 - REST API endpoints can authenticate using JWT tokens
 - User serialization includes email, names, and timestamps
+- Comprehensive validation for registration and profile updates
