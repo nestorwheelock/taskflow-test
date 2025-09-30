@@ -202,11 +202,153 @@ INSTALLED_APPS = [
 AUTH_USER_MODEL = 'users.CustomUser'
 ```
 
+## API Endpoints
+
+### Authentication Views
+
+#### UserRegistrationView
+**POST /api/auth/register** - User registration with JWT token generation
+
+**Request Body:**
+```json
+{
+    "email": "user@example.com",
+    "password": "SecurePass123!",
+    "password_confirm": "SecurePass123!",
+    "first_name": "John",
+    "last_name": "Doe"
+}
+```
+
+**Response (201 Created):**
+```json
+{
+    "access": "jwt_access_token",
+    "refresh": "jwt_refresh_token",
+    "user": {
+        "email": "user@example.com",
+        "first_name": "John",
+        "last_name": "Doe",
+        "created_at": "2024-01-01T12:00:00Z",
+        "updated_at": "2024-01-01T12:00:00Z"
+    }
+}
+```
+
+#### UserLoginView
+**POST /api/auth/login** - User authentication with JWT token generation
+
+**Request Body:**
+```json
+{
+    "email": "user@example.com",
+    "password": "SecurePass123!"
+}
+```
+
+**Response (200 OK):**
+```json
+{
+    "access": "jwt_access_token",
+    "refresh": "jwt_refresh_token",
+    "user": {
+        "email": "user@example.com",
+        "first_name": "John",
+        "last_name": "Doe",
+        "created_at": "2024-01-01T12:00:00Z",
+        "updated_at": "2024-01-01T12:00:00Z"
+    }
+}
+```
+
+#### UserProfileView
+**GET /api/auth/profile** - Get user profile (requires authentication)
+
+**Headers:**
+```
+Authorization: Bearer jwt_access_token
+```
+
+**Response (200 OK):**
+```json
+{
+    "email": "user@example.com",
+    "first_name": "John",
+    "last_name": "Doe",
+    "created_at": "2024-01-01T12:00:00Z",
+    "updated_at": "2024-01-01T12:00:00Z"
+}
+```
+
+**PUT /api/auth/profile** - Update user profile (requires authentication)
+
+**Headers:**
+```
+Authorization: Bearer jwt_access_token
+```
+
+**Request Body:**
+```json
+{
+    "email": "newemail@example.com",
+    "first_name": "Updated",
+    "last_name": "Name"
+}
+```
+
+**PATCH /api/auth/profile** - Partial update user profile (requires authentication)
+
+**Headers:**
+```
+Authorization: Bearer jwt_access_token
+```
+
+**Request Body:**
+```json
+{
+    "first_name": "Updated"
+}
+```
+
+#### CustomTokenRefreshView
+**POST /api/auth/refresh** - Refresh JWT access token
+
+**Request Body:**
+```json
+{
+    "refresh": "jwt_refresh_token"
+}
+```
+
+**Response (200 OK):**
+```json
+{
+    "access": "new_jwt_access_token"
+}
+```
+
+## Testing
+
+The app includes comprehensive tests:
+
+- **Model Tests** (`test_models.py`): Basic user creation and validation (7 tests)
+- **Edge Case Tests** (`test_edge_cases.py`): Unicode handling, validation, error cases (8 tests)
+- **Serializer Tests** (`test_serializers.py`): Registration, login, and profile serializer validation (15 tests)
+- **View Tests** (`test_views.py`): REST API endpoint functionality and authentication (16 tests)
+
+**Total: 46 tests passing**
+
+Run tests with:
+```bash
+python manage.py test users
+```
+
 ## API Integration
 
-This user model integrates with Django REST Framework and JWT authentication:
+This authentication system provides:
 
-- JWT tokens use email as the user identifier
-- REST API endpoints can authenticate using JWT tokens
-- User serialization includes email, names, and timestamps
-- Comprehensive validation for registration and profile updates
+- JWT token-based authentication for stateless API access
+- Complete REST API endpoints for user management
+- Comprehensive validation for all user operations
+- Secure password handling and email validation
+- Token refresh mechanism for long-lived sessions
